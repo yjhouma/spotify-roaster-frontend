@@ -1,3 +1,9 @@
+# The Spotify Roasting App
+
+This app will take your top 10 user and using LLM try to roast your music taste
+
+
+
 # React + Vite
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
