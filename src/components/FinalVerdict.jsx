@@ -97,9 +97,11 @@ import { useRef, useState } from 'react';
 import html2canvas from 'html2canvas';
 import { Share2, Loader2 } from 'lucide-react';
 
+// eslint-disable-next-line react/prop-types
 const FinalVerdict = ({ text, visibleParagraphs }) => {
   const verdictRef = useRef(null);
   const [isSharing, setIsSharing] = useState(false);
+  // eslint-disable-next-line react/prop-types
   const paragraphs = text.split('\n\n').filter(p => p.trim());
 
   const handleShare = async () => {

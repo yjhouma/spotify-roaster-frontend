@@ -1,5 +1,5 @@
+// eslint-disable-next-line no-unused-vars
 import React, { useState, useEffect } from 'react';
-import { mockTopArtists, mockRoasts, finalRoast } from '../constants/mockData';
 import HomeScreen from './HomeScreen';
 import LoadingState from './LoadingState';
 import RoastCard from './RoastCard';
@@ -16,10 +16,48 @@ const SpotifyRoaster = () => {
   const [showFirstRoast, setShowFirstRoast] = useState(false);
   const [visibleParagraphs, setVisibleParagraphs] = useState(0);
   const [canClick, setCanClick] = useState(true);
+  const [roastData, setRoastData] = useState(null);
   
+  // useEffect(() => {
+  //   // Check if we're on the callback route
+  //   if (window.location.pathname === '/callback') {
+  //     fetchRoasts();
+  //   }
+  // }, []);
+
   useEffect(() => {
-    if (showFullRoast) {
-      const paragraphs = finalRoast.split('\n\n').filter(p => p.trim());
+    const checkSession = async () => {
+      if (window.location.pathname === '/callback') {
+        // Add a small delay to ensure cookie is set
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // Debug: check if session is valid
+        try {
+          const debugResponse = await fetch(`http://0.0.0.0:8000/api/debug/session`, {
+            credentials: 'include'
+          });
+          const debugData = await debugResponse.json();
+          console.log('Session debug:', debugData);
+            
+          if (debugData.is_valid) {
+            fetchRoasts();
+          } else {
+            console.error('No valid session found');
+            setStep('home');
+          }
+        } catch (error) {
+          console.error('Session check failed:', error);
+          setStep('home');
+        }
+      }
+    };
+
+    checkSession();
+  }, []);
+
+  useEffect(() => {
+    if (showFullRoast && roastData) {
+      const paragraphs = roastData.final_verdict.split('\n\n').filter(p => p.trim());
       let currentParagraph = 0;
       
       const showNextParagraph = () => {
@@ -34,20 +72,44 @@ const SpotifyRoaster = () => {
 
       setTimeout(showNextParagraph, TRANSITION_DURATION);
     }
-  }, [showFullRoast]);
+  }, [showFullRoast, roastData]);
 
-  const handleSpotifyConnect = () => {
+  const handleSpotifyConnect = async () => {
     setStep('connecting');
-    setTimeout(() => {
-      setStep('analyzing');
-      setTimeout(() => {
-        setStep('roasting');
-      }, 2000);
-    }, 1500);
+    try {
+      const response = await fetch('http://0.0.0.0:8000/api/spotify/login', {
+        credentials: 'include'
+      });
+      const { url } = await response.json();
+      window.location.href = url;
+    } catch (error) {
+      console.error('Failed to connect:', error);
+      setStep('home');
+    }
+  };
+
+  const fetchRoasts = async () => {
+    setStep('analyzing');
+    try {
+      const response = await fetch('http://0.0.0.0:8000/api/spotify/top-artists', {
+        credentials: 'include'
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch roasts');
+      }
+      
+      const data = await response.json(); 
+      setRoastData(data);
+      setStep('roasting');
+    } catch (error) {
+      console.error('Failed to fetch roasts:', error);
+      setStep('home');
+    }
   };
 
   const handleRoastClick = () => {
-    if (!canClick || isTransitioning) return;
+    if (!canClick || isTransitioning || !roastData) return;
     
     setCanClick(false);
     if (!showFirstRoast) {
@@ -58,7 +120,7 @@ const SpotifyRoaster = () => {
 
     setIsTransitioning(true);
     setTimeout(() => {
-      if (currentRoastIndex < mockRoasts.length - 1) {
+      if (currentRoastIndex < roastData.artist_comments.length - 1) {
         setCurrentRoastIndex(prev => prev + 1);
         setIsTransitioning(false);
         setCanClick(true);
@@ -87,22 +149,21 @@ const SpotifyRoaster = () => {
         />
       )}
 
-      {step === 'roasting' && !showFullRoast && (
+      {step === 'roasting' && !showFullRoast && roastData && (
         <RoastCard
-          artist={mockTopArtists[currentRoastIndex]}
-          roast={mockRoasts[currentRoastIndex]}
+          artistRoast={roastData.artist_comments[currentRoastIndex]}
           showFirstRoast={showFirstRoast}
           isTransitioning={isTransitioning}
-          nextArtist={currentRoastIndex < mockRoasts.length - 1 ? mockTopArtists[currentRoastIndex + 1] : null}
-          nextRoast={currentRoastIndex < mockRoasts.length - 1 ? mockRoasts[currentRoastIndex + 1] : null}
+          nextArtistRoast={currentRoastIndex < roastData.artist_comments.length - 1 ? 
+            roastData.artist_comments[currentRoastIndex + 1] : null}
           onCardClick={handleRoastClick}
           canClick={canClick}
         />
       )}
 
-      {showFullRoast && (
+      {showFullRoast && roastData && (
         <FinalVerdict 
-          text={finalRoast}
+          text={roastData.final_verdict}
           visibleParagraphs={visibleParagraphs}
         />
       )}
