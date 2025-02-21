@@ -98,7 +98,7 @@ import html2canvas from 'html2canvas';
 import { Share2, Loader2 } from 'lucide-react';
 
 // eslint-disable-next-line react/prop-types
-const FinalVerdict = ({ text, visibleParagraphs }) => {
+const FinalVerdict = ({ text, verdictTitle,visibleParagraphs }) => {
   const verdictRef = useRef(null);
   const [isSharing, setIsSharing] = useState(false);
   // eslint-disable-next-line react/prop-types
@@ -165,7 +165,7 @@ const FinalVerdict = ({ text, visibleParagraphs }) => {
         className="bg-zinc-800 rounded-lg p-8 shadow-xl"
       >
         <h2 className="text-3xl font-bold mb-8 text-center text-white">
-          The Final Verdict 🔥
+          {verdictTitle}
         </h2>
         <div className="space-y-6 text-lg leading-relaxed">
           {paragraphs.map((paragraph, index) => (

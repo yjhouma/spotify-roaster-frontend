@@ -5,8 +5,8 @@ import LoadingState from './LoadingState';
 import RoastCard from './RoastCard';
 import FinalVerdict from './FinalVerdict';
 
-const TRANSITION_DURATION = 1200;
-const PARAGRAPH_DELAY = 1500;
+const TRANSITION_DURATION = 1200; // Match CSS transition duration
+const PARAGRAPH_DELAY = 1000;
 
 const SpotifyRoaster = () => {
   const [step, setStep] = useState('home');
@@ -18,42 +18,42 @@ const SpotifyRoaster = () => {
   const [canClick, setCanClick] = useState(true);
   const [roastData, setRoastData] = useState(null);
   
-  // useEffect(() => {
-  //   // Check if we're on the callback route
-  //   if (window.location.pathname === '/callback') {
-  //     fetchRoasts();
-  //   }
-  // }, []);
-
   useEffect(() => {
-    const checkSession = async () => {
-      if (window.location.pathname === '/callback') {
-        // Add a small delay to ensure cookie is set
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        // Debug: check if session is valid
-        try {
-          const debugResponse = await fetch(`http://0.0.0.0:8000/api/debug/session`, {
-            credentials: 'include'
-          });
-          const debugData = await debugResponse.json();
-          console.log('Session debug:', debugData);
-            
-          if (debugData.is_valid) {
-            fetchRoasts();
-          } else {
-            console.error('No valid session found');
-            setStep('home');
-          }
-        } catch (error) {
-          console.error('Session check failed:', error);
-          setStep('home');
-        }
-      }
-    };
-
-    checkSession();
+    // Check if we're on the callback route
+    if (window.location.pathname === '/callback') {
+      fetchRoasts();
+    }
   }, []);
+
+  // useEffect(() => {
+  //   const checkSession = async () => {
+  //     if (window.location.pathname === '/callback') {
+  //       // Add a small delay to ensure cookie is set
+  //       await new Promise(resolve => setTimeout(resolve, 1000));
+        
+  //       // Debug: check if session is valid
+  //       try {
+  //         const debugResponse = await fetch(`http://localhost:8000/api/debug/session`, {
+  //           credentials: 'include'
+  //         });
+  //         const debugData = await debugResponse.json();
+  //         console.log('Session debug:', debugData);
+            
+  //         if (debugData.is_valid) {
+  //           fetchRoasts();
+  //         } else {
+  //           console.error('No valid session found');
+  //           setStep('home');
+  //         }
+  //       } catch (error) {
+  //         console.error('Session check failed:', error);
+  //         setStep('home');
+  //       }
+  //     }
+  //   };
+
+  //   checkSession();
+  // }, []);
 
   useEffect(() => {
     if (showFullRoast && roastData) {
@@ -77,7 +77,7 @@ const SpotifyRoaster = () => {
   const handleSpotifyConnect = async () => {
     setStep('connecting');
     try {
-      const response = await fetch('http://0.0.0.0:8000/api/spotify/login', {
+      const response = await fetch('https://spotify-roaster-backend.onrender.com/api/spotify/login', {
         credentials: 'include'
       });
       const { url } = await response.json();
@@ -90,17 +90,25 @@ const SpotifyRoaster = () => {
 
   const fetchRoasts = async () => {
     setStep('analyzing');
+
+    setRoastData(null); // Reset existing data
+    setCurrentRoastIndex(0); // Reset to first item
+    setShowFirstRoast(false); // Reset animation state
+    setIsTransitioning(false); // Clear any transitions
+
     try {
-      const response = await fetch('http://0.0.0.0:8000/api/spotify/top-artists', {
+      const response = await fetch('https://spotify-roaster-backend.onrender.com/api/spotify/top-artists', {
         credentials: 'include'
       });
       
       if (!response.ok) {
         throw new Error('Failed to fetch roasts');
       }
-      
       const data = await response.json(); 
       setRoastData(data);
+      
+      
+      
       setStep('roasting');
     } catch (error) {
       console.error('Failed to fetch roasts:', error);
@@ -108,28 +116,54 @@ const SpotifyRoaster = () => {
     }
   };
 
+
   const handleRoastClick = () => {
-    if (!canClick || isTransitioning || !roastData) return;
-    
+    if (!canClick || isTransitioning || !roastData?.artist_comment) return;
+  
     setCanClick(false);
+    
     if (!showFirstRoast) {
       setShowFirstRoast(true);
       setTimeout(() => setCanClick(true), TRANSITION_DURATION);
       return;
     }
-
+  
     setIsTransitioning(true);
+    
+    // Wait for transition to complete before updating index
     setTimeout(() => {
-      if (currentRoastIndex < roastData.artist_comments.length - 1) {
+      if (currentRoastIndex < roastData.artist_comment.length - 1) {
         setCurrentRoastIndex(prev => prev + 1);
-        setIsTransitioning(false);
-        setCanClick(true);
       } else {
         setShowFullRoast(true);
       }
+      setIsTransitioning(false);
+      setCanClick(true);
     }, TRANSITION_DURATION);
   };
 
+  // const handleRoastClick = () => {
+  //   if (!canClick || isTransitioning || !roastData) return;
+    
+  //   setCanClick(false);
+  //   if (!showFirstRoast) {
+  //     setShowFirstRoast(true);
+  //     setTimeout(() => setCanClick(true), TRANSITION_DURATION);
+  //     return;
+  //   }
+
+  //   setIsTransitioning(true);
+  //   setTimeout(() => {
+  //     if (currentRoastIndex < roastData.artist_comment.length - 1) {
+  //       setCurrentRoastIndex(prev => prev + 1);
+  //       setIsTransitioning(false);
+  //       setCanClick(true);
+  //     } else {
+  //       setShowFullRoast(true);
+  //     }
+  //   }, TRANSITION_DURATION);
+  // };
+// Need to add cleaning
   return (
     <div className="min-h-screen bg-zinc-900 text-white flex flex-col items-center justify-center p-4">
       {step === 'home' && (
@@ -151,11 +185,13 @@ const SpotifyRoaster = () => {
 
       {step === 'roasting' && !showFullRoast && roastData && (
         <RoastCard
-          artistRoast={roastData.artist_comments[currentRoastIndex]}
+          transitionDurtaion={TRANSITION_DURATION}
+          key={currentRoastIndex}
+          artistRoast={roastData.artist_comment[currentRoastIndex]}
           showFirstRoast={showFirstRoast}
           isTransitioning={isTransitioning}
-          nextArtistRoast={currentRoastIndex < roastData.artist_comments.length - 1 ? 
-            roastData.artist_comments[currentRoastIndex + 1] : null}
+          nextArtistRoast={currentRoastIndex < roastData.artist_comment.length - 1 ? 
+            roastData.artist_comment[currentRoastIndex + 1] : null}
           onCardClick={handleRoastClick}
           canClick={canClick}
         />
@@ -164,6 +200,7 @@ const SpotifyRoaster = () => {
       {showFullRoast && roastData && (
         <FinalVerdict 
           text={roastData.final_verdict}
+          verdictTitle={roastData.verdict_title}
           visibleParagraphs={visibleParagraphs}
         />
       )}
