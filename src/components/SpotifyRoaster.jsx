@@ -98,7 +98,11 @@ const SpotifyRoaster = () => {
 
     try {
       const response = await fetch('https://spotify-roaster-backend.onrender.com/api/spotify/top-artists', {
-        credentials: 'include'
+        credentials: 'include',
+         headers: {
+            'Accept': 'application/json',
+        }
+
       });
       
       if (!response.ok) {
