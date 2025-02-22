@@ -21,7 +21,12 @@ const SpotifyRoaster = () => {
   useEffect(() => {
     // Check if we're on the callback route
     if (window.location.pathname === '/callback') {
-      fetchRoasts();
+      const params = new URLSearchParams(window.location.search);
+      const token = params.get('token');
+  
+      if (token) {
+        fetchRoasts(token);
+      }
     }
   }, []);
 
@@ -58,7 +63,7 @@ const SpotifyRoaster = () => {
     }
   };
 
-  const fetchRoasts = async () => {
+  const fetchRoasts = async (token) => {
     setStep('analyzing');
 
     setRoastData(null); // Reset existing data
@@ -67,7 +72,7 @@ const SpotifyRoaster = () => {
     setIsTransitioning(false); // Clear any transitions
 
     try {
-      const response = await fetch('/api/spotify/top-artists', {
+      const response = await fetch(`/api/spotify/top-artists?token=${token}`, {
         credentials: 'include',
          headers: {
             'Accept': 'application/json',
