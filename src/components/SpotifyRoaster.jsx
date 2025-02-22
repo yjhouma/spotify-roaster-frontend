@@ -47,7 +47,7 @@ const SpotifyRoaster = () => {
   const handleSpotifyConnect = async () => {
     setStep('connecting');
     try {
-      const response = await fetch('https://spotify-roaster-backend.onrender.com/api/spotify/login', {
+      const response = await fetch('/api/spotify/login', {
         credentials: 'include'
       });
       const { url } = await response.json();
@@ -67,7 +67,7 @@ const SpotifyRoaster = () => {
     setIsTransitioning(false); // Clear any transitions
 
     try {
-      const response = await fetch('https://spotify-roaster-backend.onrender.com/api/spotify/top-artists', {
+      const response = await fetch('/api/spotify/top-artists', {
         credentials: 'include',
          headers: {
             'Accept': 'application/json',
