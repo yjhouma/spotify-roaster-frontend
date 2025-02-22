@@ -25,36 +25,6 @@ const SpotifyRoaster = () => {
     }
   }, []);
 
-  // useEffect(() => {
-  //   const checkSession = async () => {
-  //     if (window.location.pathname === '/callback') {
-  //       // Add a small delay to ensure cookie is set
-  //       await new Promise(resolve => setTimeout(resolve, 1000));
-        
-  //       // Debug: check if session is valid
-  //       try {
-  //         const debugResponse = await fetch(`http://localhost:8000/api/debug/session`, {
-  //           credentials: 'include'
-  //         });
-  //         const debugData = await debugResponse.json();
-  //         console.log('Session debug:', debugData);
-            
-  //         if (debugData.is_valid) {
-  //           fetchRoasts();
-  //         } else {
-  //           console.error('No valid session found');
-  //           setStep('home');
-  //         }
-  //       } catch (error) {
-  //         console.error('Session check failed:', error);
-  //         setStep('home');
-  //       }
-  //     }
-  //   };
-
-  //   checkSession();
-  // }, []);
-
   useEffect(() => {
     if (showFullRoast && roastData) {
       const paragraphs = roastData.final_verdict.split('\n\n').filter(p => p.trim());
@@ -146,27 +116,7 @@ const SpotifyRoaster = () => {
     }, TRANSITION_DURATION);
   };
 
-  // const handleRoastClick = () => {
-  //   if (!canClick || isTransitioning || !roastData) return;
-    
-  //   setCanClick(false);
-  //   if (!showFirstRoast) {
-  //     setShowFirstRoast(true);
-  //     setTimeout(() => setCanClick(true), TRANSITION_DURATION);
-  //     return;
-  //   }
 
-  //   setIsTransitioning(true);
-  //   setTimeout(() => {
-  //     if (currentRoastIndex < roastData.artist_comment.length - 1) {
-  //       setCurrentRoastIndex(prev => prev + 1);
-  //       setIsTransitioning(false);
-  //       setCanClick(true);
-  //     } else {
-  //       setShowFullRoast(true);
-  //     }
-  //   }, TRANSITION_DURATION);
-  // };
 // Need to add cleaning
   return (
     <div className="min-h-screen bg-zinc-900 text-white flex flex-col items-center justify-center p-4">
